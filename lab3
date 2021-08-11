@@ -1,0 +1,52 @@
+
+[Dockerfile]
+~~~
+FROM openjdk:8u212-jdk-alpine
+COPY target/*SNAPSHOT.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-Xmx400M","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar","--spring.profiles.active=docker"]
+~~~
+
+도커라이징
+order 와 delivery, gateway 의 최상위 root 에 Dockerfile 이 있는지 확인 한다.
+Dockerfile 파일이 있는 경로에서 아래 명령을 실행 한다.
+? docker images 했을 때.. 보이는게 내 로컬에 있는 빌드된 이미지들인가?
+? docker hub에 올라간 리스트들을 command로는 확인 못하나?
+~~~
+ docker login
+ docker build -t [dockerhub ID]/order:[오늘날짜] .     
+ docker images
+ docker push [dockerhub ID]/order:[오늘날짜]  
+~~~
+
+
+
+
+클러스터에 배포
+yaml 파일로 배포
+order/kubernetes 폴더내의 deployment.yaml을 오픈한다.
+image: 부분을 push 한 이미지 명으로 수정한다: [dockerhub ID]/order:[오늘날짜]
+저장후, 다음명령:
+~~~
+kubectl apply -f kubernetes/deployment.yml
+
+kubectl apply -f kubernetes/service.yml
+~~~
+
+서비스 확인
+~~~
+게이트웨이 주소 확인
+
+kubectl get svc
+Pod 생성 확인
+
+kubectl get po
+~~~
+
+
+이슈 발생 시
+~~~
+쿠버네티스 객체 들이 이미 존재하는 경우, 다음을 통하여 객체들을 제거:
+kubectl delete deploy --all
+kubectl delete svc --all
+~~~
