@@ -1,0 +1,125 @@
+
+
+도커 허브에 저장된이미지로 배포
+~~~
+kubectl create deploy order --image=[게정명]/[]:v[버전]
+kubectl get all
+~~~
+
+~~~
+- kubectl get all : 생성된 객체(Pod, Deployment, ReplicaSet) 확인
+- kubectl get deploy -o wide : 배포에 사용된 이미지 확인
+- kubectl get pod -o wide : 파드가 생성된 워크노드 확인
+~~~
+
+트러블 슈팅
+~~~
+kubectl describe po [Pod 명]
+kubectl logs -f [Pod 명]
+kubectl exec -it [Pod 명] -- /bin/sh 
+~~~
+
+이미지 수정
+~~~
+kubectl set image deploy order monolith-order=[계정명]/[]:v[버전]
+~~~
+
+서비스 삭제
+~~~
+# New Terminal (관측용)
+watch kubectl get pod
+# New Terminal (pod 삭제용)
+kubectl delete pod -l app=order 
+~~~
+Pod를 삭제해도 새로운 Pod로 서비스가 재생성됨을 확인
+
+
+클라우드 외부에서도 접근 가능하도록 노출하기
+```
+kubectl expose deploy order --type=LoadBalancer --port=8080
+kubectl get service -w
+```
+External IP를 얻어오는데 오래걸리거나, ALB 등이 연결되는데, 시간이 걸리는 경우 다음의 port-forwarding 명령으로 localhost 에 접속할 수 있다:
+
+확인 방법
+~~~
+kubectl get service -w
+# 결과로 나오는 external ip:port로 접속
+~~~
+
+
+```
+# 새 터미널
+kubectl port-forward deploy/order 8080:8080
+# 다른 터미널
+http localhost:8080
+```
+Service 정보의 External IP가 Pending 상태에서 IP정보로 변경시까지 대기하기
+엔드포인트를 통해 서비스 확인 - http://(IP정보):8080/orders
+Ctrl + C를 눌러 모니터링 모드 종료하기
+
+
+
+롤백
+~~~
+kubectl rollout undo deploy order
+kubectl get deploy -o wide
+~~~
+
+
+scale0out
+~~~
+kubectl scale deploy order --replicas=3
+kubectl get pod
+~~~
+~~~
+root@labs--1534752307:/home/project/ops-kubernetes# kubectl get pod
+NAME                     READY   STATUS    RESTARTS   AGE
+order-6549f67555-cr69c   1/1     Running   0          91s
+root@labs--1534752307:/home/project/ops-kubernetes# kubectl scale deploy order --replicas=3
+deployment.apps/order scaled
+root@labs--1534752307:/home/project/ops-kubernetes# kubectl get pod
+NAME                     READY   STATUS    RESTARTS   AGE
+order-6549f67555-6h42l   1/1     Running   0          2s
+order-6549f67555-7hj5c   1/1     Running   0          2s
+order-6549f67555-cr69c   1/1     Running   0          96s
+~~~
+
+
+실제로는 yaml 파일 수정해서 change 되는 부분만 적용되게 함
+[Sample]
+~~~
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-by-yaml
+  labels:
+    app: order
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      containers:
+        - name: order
+          image: jinyoung/monolith-order:v202105042
+          ports:
+            - containerPort: 8080       
+~~~
+
+입력/저장
+~~~
+- kubectl apply -f order.yaml 
+- kubectl get all 
+~~~
+
+혹은, 기존의 쿠버네티스 내에 저장된 객체에서 yaml을 획득할수도 있다:
+~~~
+kubectl get deploy order -o yaml > order.yaml
+~~~
+하지만 얻어낸 객체의 status 파트와 uid 등 불필요한 속성들을 일일이 지워주고 계속사용해야 한다.
