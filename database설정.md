@@ -140,6 +140,7 @@ spec:
 
 Pod 에 접속하여 orderdb 데이터베이스 공간을 만들어주고 데이터베이스가 잘 동작하는지 확인한다:
 ~~~
+# mysql 접속
 $ kubectl exec mysql -it -- bash
 
 # echo $MYSQL_ROOT_PASSWORD
@@ -182,5 +183,35 @@ kubectl port-forward svc/order 8080:8080
 ~~~
 http order:8080/orders productId=1 customerId="jjy"
 ~~~
+
+
+! 영속 데이터베이스 사용
+
+mysql.yaml
+~~~
+    persistentVolumeClaim:
+      claimName: "fs"
+~~~
+
+fs라고 하는 PVC를 만들어야 한다.. persistent volumn claim
+
+~~~
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fs
+  labels:
+    app: test-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Mi
+~~~
+
+
+
+
 
 
