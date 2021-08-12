@@ -171,8 +171,14 @@ mysql> exit
 kubectl expose pod mysql --port=3306
 ~~~
 
+
 port-forward 하고 아래 명령어 날리면 데이터 들어가야 하는데
 order:8080이 아닌 localhost:8080으로 해야 들어간다. 뭔가 잘못한듯 ~
+~~~
+# deploy/order 말고 svc/order이 더 안정적임
+
+kubectl port-forward svc/order 8080:8080
+~~~
 ~~~
 http order:8080/orders productId=1 customerId="jjy"
 ~~~
