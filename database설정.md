@@ -15,7 +15,7 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL57Dialect
   datasource:
-    url: jdbc:mysql://${_DATASOURCE_ADDRESS:35.221.110.118:3306}/${_DATASOURCE_TABLESPACE:my-database}
+    url: jdbc:mysql://${_DATASOURCE_ADDRESS:[ip]:[port]}/${_DATASOURCE_TABLESPACE:my-database}
     username: ${_DATASOURCE_USERNAME:root1}
     password: ${_DATASOURCE_PASSWORD:secretpassword}
     driverClassName: com.mysql.cj.jdbc.Driver
@@ -42,7 +42,7 @@ spec:
       containers: 
         - 
           name: "order"
-          image: "jinyoung/monolith-order:v202105042"
+          image: "[image명]"
           ports: 
             - 
               containerPort: 80
@@ -170,3 +170,11 @@ mysql> exit
 ~~~
 kubectl expose pod mysql --port=3306
 ~~~
+
+port-forward 하고 아래 명령어 날리면 데이터 들어가야 하는데
+order:8080이 아닌 localhost:8080으로 해야 들어간다. 뭔가 잘못한듯 ~
+~~~
+http order:8080/orders productId=1 customerId="jjy"
+~~~
+
+
